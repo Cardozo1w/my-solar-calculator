@@ -1,101 +1,170 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
+import { CheckCircle2, SunIcon, Moon, Sun } from "lucide-react"
+
+interface SummaryData {
+  consumption: string;
+  period: string;
+  panelPower: string;
+  peakSunHours: string;
+  result: number;
+}
+
+export default function CalculadoraPanelesSolares() {
+  const [consumption, setConsumption] = useState("")
+  const [period, setPeriod] = useState("bimestral")
+  const [panelPower, setPanelPower] = useState("")
+  const [peakSunHours, setPeakSunHours] = useState("")
+  const [summary, setSummary] = useState<SummaryData | null>(null)
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [darkMode, setDarkMode] = useState(true)
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [darkMode])
+
+  const validateInputs = () => {
+    const newErrors: { [key: string]: string } = {}
+    if (!consumption || isNaN(Number(consumption)) || Number(consumption) <= 0) {
+      newErrors.consumption = "Por favor, ingrese un valor de consumo válido"
+    }
+    if (!panelPower || isNaN(Number(panelPower)) || Number(panelPower) <= 0) {
+      newErrors.panelPower = "Por favor, ingrese una potencia de panel válida"
+    }
+    if (!peakSunHours || isNaN(Number(peakSunHours)) || Number(peakSunHours) <= 0 || Number(peakSunHours) > 24) {
+      newErrors.peakSunHours = "Por favor, ingrese un número válido de horas pico de sol (0-24)"
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const calculatePanels = () => {
+    if (!validateInputs()) return
+
+    const monthlyConsumption = period === "bimestral" ? Number(consumption) / 2 : Number(consumption)
+    const dailyConsumption = monthlyConsumption / 30
+    const dailyEnergyRequired = dailyConsumption / Number(peakSunHours)
+    const numberOfPanels = Math.ceil(dailyEnergyRequired * 1000 / Number(panelPower))
+    
+    setSummary({
+      consumption,
+      period,
+      panelPower,
+      peakSunHours,
+      result: numberOfPanels
+    })
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className={`w-full max-w-4xl mx-auto p-4 ${darkMode ? 'dark' : ''}`}>
+      <div className="flex justify-end mb-4">
+        <div className="flex items-center space-x-2">
+          <Sun className="h-4 w-4 text-yellow-500" />
+          <Switch
+            checked={darkMode}
+            onCheckedChange={setDarkMode}
+            className="data-[state=checked]:bg-slate-700"
+          />
+          <Moon className="h-4 w-4 text-slate-300" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+      <Card className="bg-white dark:bg-gray-800 mb-6">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center text-blue-600 dark:text-blue-300">
+            <SunIcon className="inline-block mr-2" />
+            Calculadora de Paneles Solares
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="consumption" className="text-lg font-semibold">Consumo (kWh)</Label>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                <Input
+                  id="consumption"
+                  type="number"
+                  placeholder="Ingrese el consumo"
+                  value={consumption}
+                  onChange={(e) => setConsumption(e.target.value)}
+                  className={`flex-grow ${errors.consumption ? 'border-red-500' : ''}`}
+                />
+                <Select value={period} onValueChange={setPeriod}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Seleccione período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mensual">Mensual</SelectItem>
+                    <SelectItem value="bimestral">Bimestral</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {errors.consumption && <p className="text-red-500 text-sm">{errors.consumption}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="panelPower" className="text-lg font-semibold">Potencia del Panel (W)</Label>
+              <Input
+                id="panelPower"
+                type="number"
+                placeholder="Ingrese la potencia del panel"
+                value={panelPower}
+                onChange={(e) => setPanelPower(e.target.value)}
+                className={errors.panelPower ? 'border-red-500' : ''}
+              />
+              {errors.panelPower && <p className="text-red-500 text-sm">{errors.panelPower}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="peakSunHours" className="text-lg font-semibold">Horas Pico de Sol</Label>
+              <Input
+                id="peakSunHours"
+                type="number"
+                step="0.1"
+                placeholder="Ingrese las horas pico de sol"
+                value={peakSunHours}
+                onChange={(e) => setPeakSunHours(e.target.value)}
+                className={errors.peakSunHours ? 'border-red-500' : ''}
+              />
+              {errors.peakSunHours && <p className="text-red-500 text-sm">{errors.peakSunHours}</p>}
+            </div>
+            <Button 
+              type="button" 
+              onClick={calculatePanels} 
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              Calcular
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {summary && (
+        <Card className="bg-white dark:bg-gray-800 shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-2xl font-bold text-center text-green-600 dark:text-green-400">
+              <CheckCircle2 className="inline-block mr-2" />
+              Resumen de cálculo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p className="text-lg"><strong>Paneles requeridos:</strong> <span className="text-blue-600 dark:text-blue-400">{summary.result}</span></p>
+              <p><strong>Consumo:</strong> {summary.consumption} kWh ({summary.period})</p>
+              <p><strong>Potencia del panel:</strong> {summary.panelPower} W</p>
+              <p><strong>Horas pico de sol:</strong> {summary.peakSunHours}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
-  );
+  )
 }
